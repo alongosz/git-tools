@@ -1,0 +1,35 @@
+#!/bin/bash
+#
+# php-cs-fixer git pre commit hook.
+#
+# It disallows committing php files which don't follow coding standards defined
+# in the project's php-cs-fixer configuration file (.php_cs)
+#
+# Place this file in every git repository as
+# .git/hooks/pre-commit
+# and make it executable.
+#
+# Copyright (c) 2018 Andrew Longosz < andrew at longosz dot net >
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED
+# For the full license, see LICENSE file provided with this software.
+
+modified_files=$(git diff --cached --name-only --diff-filter=ACMRT '*.php')
+
+# if there are no modified php files staged for commit, exit
+if [[ -z ${modified_files} ]]; then
+	exit 0;
+fi
+
+# determine path to php-cs-fixer executable
+if [[ -x './vendor/bin/php-cs-fixer' ]]; then
+	fixer_cmd='./vendor/bin/php-cs-fixer'
+elif [[ -x './bin/php-cs-fixer' ]]; then
+	fixer_cmd='./bin/php-cs-fixer'
+elif [[ -x $(which php-cs-fixer) ]]; then
+	fixer_cmd=$(which php-cs-fixer)
+fi
+
+${fixer_cmd} fix --diff --no-interaction --dry-run --path-mode=intersection --config=.php_cs ${modified_files}
+
+exit $?
